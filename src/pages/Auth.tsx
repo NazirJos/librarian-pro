@@ -196,9 +196,9 @@ export default function Auth() {
             </div>
           ) : (
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="w-full">
-                <TabsTrigger value="signin w-full">Sign In</TabsTrigger>
-                {/* <TabsTrigger value="signup">Sign Up</TabsTrigger> */}
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
               
               <TabsContent value="signin">
