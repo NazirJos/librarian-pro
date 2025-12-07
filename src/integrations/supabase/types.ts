@@ -1,0 +1,322 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.5"
+  }
+  public: {
+    Tables: {
+      books: {
+        Row: {
+          author: string
+          available_copies: number
+          category: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          id: string
+          isbn: string | null
+          publication_year: number | null
+          publisher: string | null
+          status: Database["public"]["Enums"]["book_status"]
+          title: string
+          total_copies: number
+          updated_at: string | null
+        }
+        Insert: {
+          author: string
+          available_copies?: number
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          id?: string
+          isbn?: string | null
+          publication_year?: number | null
+          publisher?: string | null
+          status?: Database["public"]["Enums"]["book_status"]
+          title: string
+          total_copies?: number
+          updated_at?: string | null
+        }
+        Update: {
+          author?: string
+          available_copies?: number
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          id?: string
+          isbn?: string | null
+          publication_year?: number | null
+          publisher?: string | null
+          status?: Database["public"]["Enums"]["book_status"]
+          title?: string
+          total_copies?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          join_date: string
+          member_id: string
+          phone: string | null
+          status: Database["public"]["Enums"]["member_status"]
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          join_date?: string
+          member_id: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["member_status"]
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          join_date?: string
+          member_id?: string
+          phone?: string | null
+          status?: Database["public"]["Enums"]["member_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      transactions: {
+        Row: {
+          book_id: string
+          checkout_date: string
+          created_at: string
+          due_date: string
+          fine_amount: number | null
+          fine_paid: boolean | null
+          id: string
+          member_id: string
+          notes: string | null
+          return_date: string | null
+          status: Database["public"]["Enums"]["transaction_status"]
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          checkout_date?: string
+          created_at?: string
+          due_date: string
+          fine_amount?: number | null
+          fine_paid?: boolean | null
+          id?: string
+          member_id: string
+          notes?: string | null
+          return_date?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          checkout_date?: string
+          created_at?: string
+          due_date?: string
+          fine_amount?: number | null
+          fine_paid?: boolean | null
+          id?: string
+          member_id?: string
+          notes?: string | null
+          return_date?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      calculate_fine: { Args: { p_transaction_id: string }; Returns: number }
+      checkout_book: {
+        Args: { p_book_id: string; p_due_days?: number; p_member_id: string }
+        Returns: string
+      }
+      generate_member_id: { Args: never; Returns: string }
+      mark_fine_paid: { Args: { p_transaction_id: string }; Returns: undefined }
+      renew_book: {
+        Args: { p_extend_days?: number; p_transaction_id: string }
+        Returns: {
+          message: string
+          new_due_date: string
+          success: boolean
+        }[]
+      }
+      return_book: { Args: { p_transaction_id: string }; Returns: undefined }
+    }
+    Enums: {
+      book_status: "available" | "borrowed" | "damaged" | "lost"
+      member_status: "active" | "inactive" | "suspended"
+      transaction_status: "borrowed" | "returned" | "overdue"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      book_status: ["available", "borrowed", "damaged", "lost"],
+      member_status: ["active", "inactive", "suspended"],
+      transaction_status: ["borrowed", "returned", "overdue"],
+    },
+  },
+} as const
